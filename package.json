@@ -9,6 +9,13 @@
     "check-types": "tsc"
   },
   "dependencies": {
+    "prosemirror-commands": "^1.1.4",
+    "prosemirror-history": "^1.1.3",
+    "prosemirror-keymap": "^1.1.4",
+    "prosemirror-model": "^1.12.0",
+    "prosemirror-state": "^1.3.3",
+    "prosemirror-transform": "^1.2.8",
+    "prosemirror-view": "^1.16.4",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
@@ -21,6 +28,13 @@
     "@babel/preset-react": "^7.12.7",
     "@babel/preset-typescript": "^7.12.7",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.3",
+    "@types/prosemirror-commands": "^1.0.3",
+    "@types/prosemirror-history": "^1.0.1",
+    "@types/prosemirror-keymap": "^1.0.3",
+    "@types/prosemirror-model": "^1.11.1",
+    "@types/prosemirror-state": "^1.2.5",
+    "@types/prosemirror-transform": "^1.1.1",
+    "@types/prosemirror-view": "^1.16.1",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "autoprefixer": "^10.0.4",
