@@ -7,8 +7,6 @@ import { ExtensionType, IExtension, IKeyMap, KeyHandler } from './base';
 import { HistoryPlugin } from './extensions/history';
 import BaseKeymapPlugin from './extensions/keymap';
 
-import 'prosemirror-view/style/prosemirror.css';
-
 interface IOptions {
   extensions?: IExtension[];
   useDefaultExtensions?: boolean;
@@ -25,7 +23,7 @@ export default class ProseEditor {
   private schema: Schema;
   private keyMaps: IKeyMap;
   private state: EditorState;
-  private editor: EditorView | null = null;
+  public editor: EditorView | null = null;
 
   constructor(private node: HTMLElement, private options: IOptions = defaultOptions) {
     const extensions = this.options.extensions || [];
@@ -44,10 +42,17 @@ export default class ProseEditor {
     this.generateView();
   }
 
-  generateView() {
+  getEditor() {
+    return this.editor!;
+  }
+
+  private generateView() {
     if (!this.editor) {
       this.editor = new EditorView(this.node, {
         state: this.state,
+        attributes: {
+          class: 'min-h-full'
+        }
       });
     }
     return this.editor;

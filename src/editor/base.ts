@@ -10,7 +10,7 @@ import {
   Transaction,
   Plugin,
 } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+// import { EditorView } from 'prosemirror-view';
 
 export enum ExtensionType {
   Mark = 'mark',
@@ -18,7 +18,7 @@ export enum ExtensionType {
   Plugin = 'plugin',
 }
 
-export type KeyHandler = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
+export type KeyHandler = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
 
 export interface IKeymapOptions {
   type?: MarkType | NodeType,
@@ -39,7 +39,7 @@ export type IKeyMap = {
 export interface IExtension {
   name: string;
   type: ExtensionType;
-  isFallbackNode?: boolean;
+  // isFallbackNode?: boolean;
   getSchema?(): MarkSpec | NodeSpec;
   getPlugins?(): Plugin[];
   getKeyMaps?(options?: IKeymapOptions): IKeyMap;

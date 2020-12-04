@@ -1,7 +1,7 @@
-import { DOMOutputSpecArray, MarkType, NodeType } from 'prosemirror-model';
+import { DOMOutputSpecArray, MarkType } from 'prosemirror-model';
 import { toggleMark } from 'prosemirror-commands';
 
-import { IExtension, ExtensionType } from '../base';
+import { IExtension, ExtensionType, IKeymapOptions } from '../base';
 
 export default class Bold implements IExtension {
   type = ExtensionType.Mark;
@@ -20,14 +20,14 @@ export default class Bold implements IExtension {
     };
   }
 
-  getKeyMaps(options?: { type: MarkType | NodeType }) {
+  getKeyMaps(options?: IKeymapOptions) {
     const type = options!.type;
 
     return {
       'Mod-b': {
         description: 'Toggle the selection to/from bold',
         handler: toggleMark(type as MarkType),
-      }
+      },
     };
   }
 }

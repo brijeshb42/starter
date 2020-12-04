@@ -12,7 +12,7 @@ export default function App() {
         <aside className="w-1/5 border-r overflow-auto">
           Sidebar
         </aside>
-        <article className="w-4/5">
+        <article className="w-4/5 overflow-auto">
           <Editor />
         </article>
       </section>
