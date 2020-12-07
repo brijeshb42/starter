@@ -1,4 +1,5 @@
 import {
+  Node,
   NodeSpec,
   NodeType,
 } from 'prosemirror-model';
@@ -13,14 +14,26 @@ export default class Paragraph implements IExtension {
 
   getSchema() {
     const schema: NodeSpec = {
+      attrs: {
+        align: {
+          default: '',
+        },
+      },
       content: 'inline*',
       group: 'block',
       draggable: false,
       parseDOM: [{
         tag: 'p',
       }],
-      toDOM() {
-        return ['p', { class: 'my-2'}, 0];
+      toDOM(node: Node) {
+        const { align } = node.attrs;
+        let className = 'my-2';
+
+        if (align) {
+          className += ` text-${align}`;
+        }
+
+        return ['p', { class: className }, 0];
       },
     };
 
@@ -30,28 +43,10 @@ export default class Paragraph implements IExtension {
   getKeyMaps(options?: IKeymapOptions) {
     const { type } = options!;
     return {
-      'Mod-G': {
+      'Mod-Alt-.': {
         description: `Toggle block type to paragraph`,
         handler: setBlockType(type as NodeType),
       },
-      // 'Shift-Enter': {
-      //   description: 'Insert new line without creating a new paragraph',
-      //   handler: (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      //     const { $head, $anchor } = state.selection;
-      //     if (!$head.sameParent($anchor)) {
-      //       return false;
-      //     }
-
-      //     if ($head.parent.type.name === this.name) {
-      //       if (dispatch) {
-      //         dispatch(state.tr.insertText('\n').scrollIntoView());
-      //       }
-      //       return true;
-      //     }
-
-      //     return false;
-      //   }
-      // }
     };
   };
 }

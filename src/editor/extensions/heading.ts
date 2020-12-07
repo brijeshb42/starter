@@ -27,6 +27,9 @@ export default class Heading implements IExtension {
         level: {
           default: levels[0],
         },
+        align: {
+          default: '',
+        },
       },
       marks: '',
       content: 'inline*',
@@ -38,8 +41,14 @@ export default class Heading implements IExtension {
         attrs: { level },
       })),
       toDOM(node: Node) {
-        const { level } = node.attrs;
-        return [`h${level}`, { class: `py-3 font-bold text-${classes[level - 1]}`}, 0];
+        const { level, align } = node.attrs;
+        let className = `py-3 font-bold text-${classes[level - 1]}`;
+
+        if (align) {
+          className += ` text-${align}`;
+        }
+
+        return [`h${level}`, { class: className }, 0];
       },
     } as NodeSpec;
   }

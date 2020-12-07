@@ -1,28 +1,29 @@
 import { lift, setBlockType, wrapIn } from 'prosemirror-commands';
-import { NodeType, Node } from 'prosemirror-model';
+import { NodeType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
-import {
-  findParentNode,
-  findSelectedNodeOfType,
-} from 'prosemirror-utils';
 
 import { KeyHandler } from '../base';
 
-export function isNodeActive(state: EditorState, type: NodeType, attrs?: Object) {
-  const predicate = (node: Node) => node.type === type;
-  const node = findSelectedNodeOfType(type)(state.selection)
-    || findParentNode(predicate)(state.selection);
+export function isInParentNodeOfType(state: EditorState, name: string): boolean {
+  const { selection: { $from, $to } } = state;
 
-  if (!node || !attrs || !Object.keys(attrs).length) {
-    return !!node;
+  if (!$from.sameParent($to)) {
+    return false;
   }
 
-  return node.node.hasMarkup(type, attrs);
+  for (let i = $from.depth; i > 0; i--) {
+    const node = $from.node(i);
+    if (node.type.name === name) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function toggleWrap(type: NodeType): KeyHandler {
   return function(state: EditorState, dispatch?: (tr: Transaction) => void) {
-    const isActive = isNodeActive(state, type);
+    const isActive = isInParentNodeOfType(state, type.name);
 
     if (isActive) {
       return lift(state, dispatch);
@@ -34,7 +35,7 @@ export function toggleWrap(type: NodeType): KeyHandler {
 
 export function toggleBlockType(type: NodeType, toggleType: NodeType, attrs: Object = {}): KeyHandler {
   return function(state: EditorState, dispatch?: (tr: Transaction) => void) {
-    const isActive = isNodeActive(state, type);
+    const isActive = isInParentNodeOfType(state, type.name);
 
     if (isActive) {
       return setBlockType(toggleType)(state, dispatch);

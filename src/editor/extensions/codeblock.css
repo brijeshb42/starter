@@ -1,0 +1,4 @@
+pre[data-language]::before {
+  content: attr(data-language);
+  @apply absolute top-0 right-0 opacity-50 text-xs;
+}

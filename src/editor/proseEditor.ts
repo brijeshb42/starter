@@ -23,7 +23,7 @@ export default class ProseEditor {
   private schema: Schema;
   private keyMaps: IKeyMap;
   private state: EditorState;
-  public editor: EditorView | null = null;
+  editor: EditorView;
 
   constructor(private node: HTMLElement, private options: IOptions = defaultOptions) {
     const extensions = this.options.extensions || [];
@@ -51,9 +51,16 @@ export default class ProseEditor {
       this.editor = new EditorView(this.node, {
         state: this.state,
         attributes: {
-          class: 'min-h-full'
-        }
+          class: 'min-h-full',
+        },
+        // dispatchTransaction(tr: Transaction) {
+        //   console.log(tr);
+        //   this.updateState(this.state.apply(tr));
+        // },
       });
+      this.extensions.filter(ext => !!ext.init).forEach(ext => ext.init!({
+        editor: this.editor,
+      }))
     }
     return this.editor;
   }
@@ -84,13 +91,11 @@ export default class ProseEditor {
   }
 
   private generatePlugins() {
-    this.plugins = this.extensions.reduce((allPlugins, ext) => {
-      const extPlugins = ext.getPlugins && ext.getPlugins();
-
-      if (extPlugins && extPlugins.length) {
+    this.plugins = this.extensions.filter(ext => !!ext.getPlugins).reduce((allPlugins, ext) => {
+      const extPlugins = ext.getPlugins!();
+      if (extPlugins.length) {
         Array.prototype.push.apply(allPlugins, extPlugins);
       }
-
       return allPlugins;
     }, []);
   }

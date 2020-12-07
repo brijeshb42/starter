@@ -4,12 +4,14 @@ import {
   MarkType,
   NodeType,
   Schema,
+  Node,
 } from 'prosemirror-model';
 import {
   EditorState,
   Transaction,
   Plugin,
 } from 'prosemirror-state';
+import { EditorView, NodeView } from 'prosemirror-view';
 // import { EditorView } from 'prosemirror-view';
 
 export enum ExtensionType {
@@ -32,6 +34,10 @@ interface IKeymapResult {
   handler: KeyHandler,
 }
 
+export interface IInitOpts {
+  editor: EditorView;
+}
+
 export type IKeyMap = {
   [key: string]: IKeymapResult;
 }
@@ -40,7 +46,9 @@ export interface IExtension {
   name: string;
   type: ExtensionType;
   // isFallbackNode?: boolean;
+  init?(options: IInitOpts): void;
   getSchema?(): MarkSpec | NodeSpec;
   getPlugins?(): Plugin[];
   getKeyMaps?(options?: IKeymapOptions): IKeyMap;
+  getNodeView?(node: Node, view: EditorView, getPos: (() => number) | boolean): NodeView;
 }

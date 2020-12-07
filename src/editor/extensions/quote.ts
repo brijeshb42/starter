@@ -1,5 +1,4 @@
-import { toggleWrap } from '../commands/block';
-import { NodeSpec, NodeType } from 'prosemirror-model';
+import { NodeSpec } from 'prosemirror-model';
 import { ExtensionType, IExtension, IKeymapOptions } from '../base';
 import { EditorState, Transaction } from 'prosemirror-state';
 

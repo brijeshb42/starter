@@ -9,14 +9,13 @@
     "check-types": "tsc"
   },
   "dependencies": {
+    "@tailwindcss/forms": "^0.2.1",
     "prosemirror-commands": "^1.1.4",
     "prosemirror-history": "^1.1.3",
     "prosemirror-keymap": "^1.1.4",
     "prosemirror-model": "^1.12.0",
     "prosemirror-state": "^1.3.3",
-    "prosemirror-tables": "^1.1.1",
     "prosemirror-transform": "^1.2.8",
-    "prosemirror-utils": "^0.9.6",
     "prosemirror-view": "^1.16.4",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
