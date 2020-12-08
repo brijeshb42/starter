@@ -1,4 +1,5 @@
-import * as React from 'react';
+/** @jsx h */
+import { h } from 'preact';
 import { Mark, MarkSpec } from 'prosemirror-model';
 import { EditorState, Plugin, Transaction } from 'prosemirror-state';
 

@@ -242,6 +242,7 @@ class MonacoEditorView implements NodeView {
       }]);
       this.updating = false;
     }
+    this.editor.focus();
     return true
   }
 

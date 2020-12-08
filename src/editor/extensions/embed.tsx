@@ -1,45 +1,52 @@
-import * as React from 'react';
+/** @jsx h */
+import { h, render } from 'preact';
 import { setBlockType } from 'prosemirror-commands';
 import { Node as ProsemirrorNode, NodeSpec, NodeType } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Selection, Transaction } from 'prosemirror-state';
 import { EditorView, NodeView } from 'prosemirror-view';
 
 import FormInput, { IField } from '../components/FormInput';
-import { ExtensionType, IExtension, IInitOpts, IKeymapOptions } from '../base';
+import { ExtensionType, IExtension, IInitOpts, IKeymapOptions, KeyHandler } from '../base';
 import { isInParentNodeOfType } from '../commands/block';
 import FloatViewPlugin from './floatView';
 import { keymap } from 'prosemirror-keymap';
 
+function IFrameComponent({ src }: { src: string }): JSX.Element {
+  return (
+    <div className="iframe-container">
+      {src ? (
+        <iframe
+          src={src}
+          allowFullScreen
+          width={400}
+          height={200}
+         />
+      ) : (
+        <p className="embed-info">
+          Add embed url by pressing the relevant shortcut
+        </p>
+      )}
+    </div>
+  );
+}
+
 class EmbedView implements NodeView {
   dom: HTMLElement;
   contentDOM: HTMLElement;
-  private iframe: HTMLIFrameElement;
-  private appended = false;
+  private innerDOM: HTMLElement;
 
-  constructor(private node: ProsemirrorNode, private view: EditorView, private getPos: boolean | (() => number)) {
+  constructor(private node: ProsemirrorNode) {
     this.dom = document.createElement('figure');
-    this.iframe = document.createElement('iframe');
-    this.iframe.height = '200';
-    this.iframe.width = '400';
-    this.iframe.allowFullscreen = true;
-    this.addIframe();
+    this.innerDOM = document.createElement('div');
+    this.dom.appendChild(this.innerDOM);
     this.dom.setAttribute('data-embed', node.attrs.src || '');
     this.contentDOM = document.createElement('figcaption');
     this.dom.appendChild(this.contentDOM);
+    this.render();
   }
 
-  private addIframe(oldSrc = '') {
-    const { src } = this.node.attrs;
-
-    if (src === oldSrc || !src) {
-      return;
-    }
-
-    this.iframe.src = this.node.attrs.src;
-    if (!this.appended) {
-      this.dom.prepend(this.iframe);
-      this.appended = true;
-    }
+  private render() {
+    render(<IFrameComponent src={this.node.attrs.src as string} />, this.innerDOM);
   }
 
   update(node: ProsemirrorNode) {
@@ -47,10 +54,13 @@ class EmbedView implements NodeView {
       return false;
     }
 
-    const oldSrc = this.node.attrs.src;
     this.node = node;
-    this.addIframe(oldSrc);
+    this.render();
     return true;
+  }
+
+  destroy() {
+    render(null, this.innerDOM);
   }
 }
 
@@ -73,7 +83,7 @@ export default class Embed implements IExtension {
     const schema: NodeSpec = {
       content: 'text*',
       group: 'block',
-      defining: false,
+      defining: true,
       draggable: true,
       attrs: {
         src: {
@@ -157,23 +167,35 @@ export default class Embed implements IExtension {
     };
   };
 
-  getNodeView(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)): NodeView {
-    return new EmbedView(node, view, getPos);
+  getNodeView(node: ProsemirrorNode /*, view: EditorView, getPos: boolean | (() => number) */): NodeView {
+    return new EmbedView(node);
+  }
+
+  getHandler(direction: 'up' | 'left'): KeyHandler {
+    return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+      const { selection: { $from, $head }, selection } = state;
+      const parent = $from.parent;
+
+      if (parent.type.name !== this.name) {
+        return false;
+      }
+
+      if (selection.empty && this.editor.endOfTextblock(direction)) {
+        if (dispatch) {
+          const nextPos = Selection.near(state.doc.resolve($head.before()), -1);
+          dispatch(state.tr.setSelection(nextPos));
+        }
+        return true;
+      }
+      return false;
+    }
   }
 
   getPlugins() {
     return [
       keymap({
-        'ArrowUp': (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-          const { $from } = state.selection;
-          const parent = $from.parent;
-
-          if (parent.type.name !== this.name) {
-            return false;
-          }
-          console.log(state, dispatch);
-          return false;
-        },
+        'ArrowUp': this.getHandler('up'),
+        'ArrowLeft': this.getHandler('left'),
       }),
     ];
   }

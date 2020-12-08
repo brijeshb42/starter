@@ -1,6 +1,6 @@
 import { EditorState, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { render, unmountComponentAtNode } from 'react-dom';
+import { render } from 'preact';
 
 import { ExtensionType, IExtension } from '../base';
 
@@ -46,18 +46,17 @@ export default class FloatViewPlugin implements IExtension {
     if (this.mounted) {
       this.unmount();
     }
-    render(element, this.dom, () => {
-      this.mounted = true;
-      this.shown = true;
-      this.dom.style.visibility = 'initial';
-      this.calculateDimension(true);
-    });
+    render(element, this.dom);
+    this.mounted = true;
+    this.shown = true;
+    this.dom.style.visibility = 'initial';
+    this.calculateDimension(true);
   }
 
   unmount() {
     this.shown = false;
     this.dom.style.visibility = 'hidden';
-    unmountComponentAtNode(this.dom);
+    render(null, this.dom);
     this.mounted = false;
   }
 

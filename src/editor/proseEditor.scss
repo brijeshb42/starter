@@ -35,8 +35,18 @@
   }
 
   figure[data-embed] {
+    @apply mt-2 border border-blue-100;
+
     figcaption {
-      @apply mt-1 mb-3;
+      @apply mt-1 mb-3 text-center text-sm;
+    }
+
+    iframe {
+      @apply mx-auto pt-2;
+    }
+
+    .embed-info {
+      @apply py-10 text-center text-lg font-bold;
     }
   }
 }

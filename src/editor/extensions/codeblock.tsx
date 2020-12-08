@@ -1,4 +1,5 @@
-import * as React from 'react';
+/** @jsx h */
+import { h } from 'preact';
 import { Node as ProsemirrorNode, NodeSpec, NodeType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 

@@ -1,4 +1,6 @@
-import * as React from 'react';
+/** @jsx h */
+import { h } from 'preact';
+import { useRef, useState, useEffect } from 'preact/hooks';
 
 export interface IField {
   type: 'text' | 'boolean';
@@ -24,11 +26,11 @@ function getCount() {
 
 export default function FormInput(props: IProps) {
   const { className, fields, title, onSubmit, submitText } = props;
-  const refs = React.useRef<{[key: string]: HTMLInputElement | null}>({});
-  const count = React.useRef(getCount());
-  const [errors, setError] = React.useState<{ [key: string]: string }>({});
+  const refs = useRef<{[key: string]: HTMLInputElement | null}>({});
+  const count = useRef(getCount());
+  const [errors, setError] = useState<{ [key: string]: string }>({});
 
-  function handleSubmit(ev: React.FormEvent) {
+  function handleSubmit(ev: Event) {
     ev.preventDefault();
 
     const values = fields.reduce((acc, field) => {
@@ -46,7 +48,7 @@ export default function FormInput(props: IProps) {
     refs.current[name] = node;
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     refs.current[fields[0].name]?.select();
   }, []);
 
@@ -63,8 +65,8 @@ export default function FormInput(props: IProps) {
                 id={id}
                 className={className}
                 type={field.type === 'boolean' ? 'checkbox' : field.type}
-                defaultValue={field.type === 'boolean' ? undefined : field.value}
-                defaultChecked={field.type === 'boolean' ? field.value : undefined}
+                value={field.type === 'boolean' ? undefined : field.value}
+                checked={field.type === 'boolean' ? field.value : undefined}
                 ref={(node) => setRef(field.name, node)}
               />
             </label>
