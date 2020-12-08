@@ -22,16 +22,22 @@ function computeChange(oldVal: string, newVal: string) {
 
 class MonacoEditorView implements NodeView {
   dom: HTMLDivElement;
+  private languageDom: HTMLElement;
   private editor: ICodeEditor
   private updating = false;
   private incomingChanges = false;
   private mod: 'metaKey' | 'ctrlKey' = /Mac/.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
   private lastLang: string;
+  private timerId: NodeJS.Timeout;
 
   constructor(private node: ProsemirrorNode, private view: EditorView, private getPos: (() => number) | boolean, private keyMaps?: IKeyMap) {
     this.dom = document.createElement('div');
     this.dom.className = 'monaco-container';
     this.dom.style.minHeight = '200px';
+    this.languageDom = document.createElement('div');
+    this.languageDom.className = 'monaco-language-element';
+    this.languageDom.textContent = node.attrs.language || 'No language';
+    this.languageDom.addEventListener('click', this.triggerLanguageChange);
     this.editor = monaco.editor.create(this.dom, {
       value: this.node.textContent,
       lineNumbers: node.attrs.showLineNumbers ? 'on' : 'off',
@@ -48,9 +54,7 @@ class MonacoEditorView implements NodeView {
       detectIndentation: false,
     }) as ICodeEditor;
     this.lastLang = node.attrs.language;
-    setTimeout(() => {
-      this.editor.layout();
-    }, 20);
+    this.timerId = setTimeout(this.resize, 5);
     this.editor.onDidChangeModelContent(() => {
       if (!this.updating) {
         this.valueChanged();
@@ -69,33 +73,19 @@ class MonacoEditorView implements NodeView {
     this.editor.onWillType(() => {
       this.incomingChanges = true;
     });
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_L, () => {
+      this.triggerLanguageChange();
+    });
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.US_SLASH, () => {
+      this.keyMaps!['Mod-Alt-/'].handler(this.view.state, this.view.dispatch);
+      this.view.focus();
+    });
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      if (exitCode(view.state, view.dispatch)) {
+        view.focus();
+      }
+    });
     this.editor.onKeyDown((ev) => {
-      if (ev[this.mod] && ev.altKey) {
-        // update language/line numbers
-        if (ev.shiftKey && ev.keyCode === monaco.KeyCode.KEY_L) {
-          ev.preventDefault();
-          this.keyMaps!['Mod-Alt-L'].handler(this.view.state, this.view.dispatch);
-          return;
-        }
-        
-        // Toggle code block
-        if (ev.keyCode === monaco.KeyCode.US_SLASH) {
-          ev.preventDefault();
-          this.keyMaps!['Mod-Alt-/'].handler(this.view.state, this.view.dispatch);
-          this.view.focus();
-          return;
-        }
-      }
-
-      // exit code block
-      if (ev.ctrlKey && ev.keyCode === monaco.KeyCode.Enter) {
-        ev.preventDefault();
-        if (exitCode(view.state, view.dispatch)) {
-          view.focus();
-        }
-        return;
-      }
-
       // handle undo/redo
       // commenting because it is not trivial. undo/redo in code editor will register as normal text change in the
       // main prosemirror editor and not as undo/redo stack. This is OK for now.
@@ -137,7 +127,27 @@ class MonacoEditorView implements NodeView {
         this.forwardSelection();
       }
     });
+    this.editor.addOverlayWidget(this);
     window.addEventListener('resize', this.resize);
+  }
+
+  triggerLanguageChange = () => {
+    this.view.focus();
+    this.keyMaps!['Mod-Alt-L'].handler(this.view.state, this.view.dispatch);
+  }
+
+  getId() {
+    return 'editor.language.overlayWidget';
+  }
+
+  getDomNode() {
+    return this.languageDom;
+  }
+
+  getPosition() {
+    return {
+      preference: monaco.editor.OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER,
+    };
   }
 
   private adjustHeight() {
@@ -149,7 +159,7 @@ class MonacoEditorView implements NodeView {
       height = contentHeight;
     }
     this.dom.style.height = `${height}px`;
-    this.editor.layout();
+    this.resize();
   }
 
   resize = () => {
@@ -229,6 +239,7 @@ class MonacoEditorView implements NodeView {
     if (node.attrs.language !== this.lastLang) {
       this.lastLang = node.attrs.language;
       monaco.editor.setModelLanguage(this.editor.getModel()!, this.lastLang);
+      this.languageDom.textContent = this.lastLang || 'No language';
     }
 
     const change = computeChange(this.editor.getValue(), node.textContent);
@@ -258,6 +269,8 @@ class MonacoEditorView implements NodeView {
   }
 
   destroy() {
+    clearTimeout(this.timerId);
+    this.languageDom.removeEventListener('click', this.triggerLanguageChange);
     window.removeEventListener('resize', this.resize);
     this.editor.dispose();
   }

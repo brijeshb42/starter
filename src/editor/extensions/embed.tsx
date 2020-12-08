@@ -1,5 +1,6 @@
 /** @jsx h */
 import { h, render } from 'preact';
+import { useState } from 'preact/hooks';
 import { setBlockType } from 'prosemirror-commands';
 import { Node as ProsemirrorNode, NodeSpec, NodeType } from 'prosemirror-model';
 import { EditorState, Selection, Transaction } from 'prosemirror-state';
@@ -12,15 +13,34 @@ import FloatViewPlugin from './floatView';
 import { keymap } from 'prosemirror-keymap';
 
 function IFrameComponent({ src }: { src: string }): JSX.Element {
+  const [ show, setShow ] = useState<boolean>(false);
+
+  function renderInfo() {
+    return (
+      <p className="embed-info">
+        <code>{src}</code>
+        <br />
+        <button onClick={() => setShow(true)}>
+          Show
+        </button>
+      </p>
+    );
+  }
+
+  function renderIframe() {
+    return (
+      <iframe
+        src={src}
+        allowFullScreen
+        width={400}
+        height={200}
+      />
+    );
+  }
   return (
     <div className="iframe-container">
       {src ? (
-        <iframe
-          src={src}
-          allowFullScreen
-          width={400}
-          height={200}
-         />
+        show ? renderIframe() : renderInfo()
       ) : (
         <p className="embed-info">
           Add embed url by pressing the relevant shortcut
@@ -55,6 +75,7 @@ class EmbedView implements NodeView {
     }
 
     this.node = node;
+    this.dom.setAttribute('data-embed', node.attrs.src || '');
     this.render();
     return true;
   }
@@ -100,9 +121,7 @@ export default class Embed implements IExtension {
         }
       }],
       toDOM(node: ProsemirrorNode) {
-        return ['figure', {
-          'data-embed': node.attrs.src || '',
-        }, 0];
+        return ['figure', 0];
       }
     };
     return schema;
@@ -194,7 +213,7 @@ export default class Embed implements IExtension {
   getPlugins() {
     return [
       keymap({
-        'ArrowUp': this.getHandler('up'),
+        'ArrowUp': this.getHandler('left'),
         'ArrowLeft': this.getHandler('left'),
       }),
     ];

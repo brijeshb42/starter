@@ -29,6 +29,10 @@
   .monaco-container {
     @apply mt-2 border border-blue-300;
 
+    .monaco-language-element {
+      @apply text-sm capitalize py-1 px-2 border cursor-pointer;
+    }
+
     &--focussed {
       @apply border-blue-500;
     }

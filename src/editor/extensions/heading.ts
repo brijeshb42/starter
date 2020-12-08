@@ -70,7 +70,7 @@ export default class Heading implements IExtension {
     const { levels } = this.options;
 
     return levels.reduce((result: IKeyMap, level: number) => {
-      result[`Ctrl-Shift-${level}`] = {
+      result[`Mod-Alt-${level}`] = {
         description: `Toggle block type to h${level}`,
         handler: setBlockType(type as NodeType, { level }),
       };
