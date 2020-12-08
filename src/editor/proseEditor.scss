@@ -1,0 +1,42 @@
+.ProseMirror {
+  @apply min-h-full;
+
+  blockquote {
+    @apply border-solid border-l-4 border-blue-500 my-3 pl-3 pt-1 pb-1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply py-3 font-bold;
+  }
+
+  p {
+    @apply my-2;
+  }
+
+  pre[data-language] {
+    @apply border-solid border-l-4 border-blue-500 my-3 pl-3 pt-1 pb-1;
+  }
+
+  a {
+    @apply text-blue-700 underline;
+  }
+
+  .monaco-container {
+    @apply mt-2 border border-blue-300;
+
+    &--focussed {
+      @apply border-blue-500;
+    }
+  }
+
+  figure[data-embed] {
+    figcaption {
+      @apply mt-1 mb-3;
+    }
+  }
+}

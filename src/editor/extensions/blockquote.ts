@@ -18,9 +18,7 @@ export default class BlockQuote implements IExtension {
         tag: 'blockquote',
       }],
       toDOM() {
-        return ['blockquote', {
-          class: 'border-solid border-l-4 border-blue-500 pl-3 pt-1 pb-1'
-        }, 0];
+        return ['blockquote', 0];
       }
     };
     return schema;

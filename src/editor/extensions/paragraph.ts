@@ -1,11 +1,11 @@
 import {
-  Node,
+  Node as ProsemirrorNode,
   NodeSpec,
   NodeType,
 } from 'prosemirror-model';
 import { setBlockType } from 'prosemirror-commands';
 
-import { IExtension, ExtensionType, IKeymapOptions } from '../base';
+import { IExtension, ExtensionType, IKeymapOptions, ALIGNMENT } from '../base';
 
 export default class Paragraph implements IExtension {
   type = ExtensionType.Node;
@@ -24,16 +24,28 @@ export default class Paragraph implements IExtension {
       draggable: false,
       parseDOM: [{
         tag: 'p',
-      }],
-      toDOM(node: Node) {
-        const { align } = node.attrs;
-        let className = 'my-2';
+        getAttrs(node: string | Node) {
+          if (typeof node === 'string') {
+            return null;
+          }
 
-        if (align) {
-          className += ` text-${align}`;
+          const className = (node as Element).className;
+          const align = className.includes('left') ? 'left' : className.includes('right') ? 'right' : className.includes('center') ? 'center' : ''; 
+          return {
+            align,
+          };
+        },
+      }],
+      toDOM(node: ProsemirrorNode) {
+        const { align } = node.attrs;
+
+        if (!align) {
+          return ['p', 0];
         }
 
-        return ['p', { class: className }, 0];
+        return ['p', {
+          class: ALIGNMENT[align as 'left' | 'right' | 'center'],
+        }, 0];
       },
     };
 

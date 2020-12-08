@@ -1,7 +1,7 @@
 import { keymap } from 'prosemirror-keymap';
-import { MarkSpec, NodeSpec, Schema } from 'prosemirror-model';
+import { MarkSpec, Node, NodeSpec, Schema } from 'prosemirror-model';
 import { EditorState, Plugin } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { Decoration, EditorView, NodeView } from 'prosemirror-view';
 
 import { ExtensionType, IExtension, IKeyMap, KeyHandler } from './base';
 import { HistoryPlugin } from './extensions/history';
@@ -27,7 +27,7 @@ export default class ProseEditor {
 
   constructor(private node: HTMLElement, private options: IOptions = defaultOptions) {
     const extensions = this.options.extensions || [];
-    
+
     if (options.useDefaultExtensions) {
       const defaultExtensions: IExtension[] = [new BaseKeymapPlugin(), new HistoryPlugin()];
       this.extensions = defaultExtensions.concat(extensions);
@@ -50,13 +50,23 @@ export default class ProseEditor {
     if (!this.editor) {
       this.editor = new EditorView(this.node, {
         state: this.state,
-        attributes: {
-          class: 'min-h-full',
-        },
         // dispatchTransaction(tr: Transaction) {
         //   console.log(tr);
         //   this.updateState(this.state.apply(tr));
         // },
+        nodeViews: this.extensions.reduce((acc, ext) => {
+          if (ext.getNodeView) {
+            acc[ext.name] = (...args) => ext.getNodeView!(...args);
+          }
+          return acc;
+        }, {} as {
+          [name: string]: (
+            node: Node,
+            view: EditorView,
+            getPos: (() => number) | boolean,
+            decorations: Decoration<{[key: string]: any;}>[]
+          ) => NodeView
+        }),
       });
       this.extensions.filter(ext => !!ext.init).forEach(ext => ext.init!({
         editor: this.editor,
@@ -128,7 +138,7 @@ export default class ProseEditor {
         keymap(Object.keys(this.keyMaps).reduce((acc, key) => {
           acc[key] = this.keyMaps[key].handler;
           return acc;
-        }, {} as {[key: string]: KeyHandler})),
+        }, {} as { [key: string]: KeyHandler })),
       ],
     });
   }

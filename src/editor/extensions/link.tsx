@@ -56,7 +56,6 @@ export default class Link implements IExtension {
           title: mark.attrs.title,
           href: mark.attrs.href,
           target: mark.attrs.newTab ? '_blank' : undefined,
-          class: 'text-blue-700 underline',
           rel: 'noopener noreferrer nofollow',
         }, 0];
       }

@@ -4,7 +4,7 @@ import ProseEditor from './proseEditor';
 import BlockQuote from './extensions/blockquote';
 import Bold from './extensions/bold';
 import QuoteCaption from './extensions/caption';
-import CodeBlock from './extensions/codeblock';
+import CodeBlock from './extensions/monacoCodeBlock';
 import Document from './extensions/document';
 import Heading from './extensions/heading';
 import Italic from './extensions/italic';
@@ -15,8 +15,11 @@ import Underline from './extensions/underline';
 import AlignPlugin from './extensions/alignPlugin';
 import FloatViewPlugin from './extensions/floatView';
 import Link from './extensions/link';
+import CodeMark from './extensions/codemark';
+import Embed from './extensions/embed';
 
 import './Wrapper.scss';
+import './proseEditor.scss';
 import './extensions/codeblock.css';
 
 export default function EditorWrapper() {
@@ -53,10 +56,14 @@ export default function EditorWrapper() {
         }),
         quoteCaptionExt,
         quoteExt,
+        new Embed({
+          floatPlugin: floatViewPlugin,
+        }),
         new BlockQuote(),
         new Text(),
         boldExt,
         new Italic(),
+        new CodeMark(),
         new Underline(),
         new Link({
           floatPlugin: floatViewPlugin,
@@ -76,6 +83,6 @@ export default function EditorWrapper() {
     };
   }, []);
   return (
-    <div className="h-full w-full relative" ref={ref} onClick={handleClick} />
+    <div className="h-full w-4/5 relative" ref={ref} onClick={handleClick} />
   );
 }

@@ -1,6 +1,7 @@
 const path = require('path');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MonacoPlugin = require('monaco-editor-webpack-plugin');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -63,6 +64,9 @@ module.exports = {
           {loader: 'css-loader', options: {sourceMap: true, importLoaders: 1}},
           {loader: 'postcss-loader', options: {sourceMap: true}},
         ],
+      }, {
+        test: /\.ttf/,
+        use: 'file-loader',
       }
     ]
   },
@@ -71,5 +75,6 @@ module.exports = {
       template: './src/index.html'
     }),
     isDevelopment && new ReactRefreshWebpackPlugin(),
+    new MonacoPlugin(),
   ].filter(Boolean)
 };

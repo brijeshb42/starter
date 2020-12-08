@@ -1,7 +1,7 @@
 import {
   NodeSpec,
   NodeType,
-  Node,
+  Node as ProsemirrorNode,
 } from 'prosemirror-model';
 import { setBlockType } from 'prosemirror-commands';
 
@@ -38,11 +38,23 @@ export default class Heading implements IExtension {
       draggable: false,
       parseDOM: levels.map((level: number) => ({
         tag: `h${level}`,
-        attrs: { level },
+        getAttrs(node: string | Node) {
+          if (typeof node === 'string') {
+            return null;
+          }
+  
+          const className = (node as Element).className;
+          const align = className.includes('left') ? 'left' : className.includes('right') ? 'right' : className.includes('center') ? 'center' : '';
+          const tag = (node as Element).tagName.toLowerCase();
+          return {
+            align,
+            level: parseInt(tag[1]),
+          };
+        },
       })),
-      toDOM(node: Node) {
+      toDOM(node: ProsemirrorNode) {
         const { level, align } = node.attrs;
-        let className = `py-3 font-bold text-${classes[level - 1]}`;
+        let className = `text-${classes[level - 1]}`;
 
         if (align) {
           className += ` text-${align}`;

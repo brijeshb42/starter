@@ -2835,6 +2835,14 @@ faye-websocket@~0.11.1:
   dependencies:
     websocket-driver ">=0.5.1"
 
+file-loader@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/file-loader/-/file-loader-6.2.0.tgz#baef7cf8e1840df325e4390b4484879480eebe4d"
+  integrity sha512-qo3glqyTa61Ytg4u73GultjHGjdRyig3tG6lPtyX/jOEJvHif9uB0/OCI2Kif6ctF3caQTW2G5gym21oAsI4pw==
+  dependencies:
+    loader-utils "^2.0.0"
+    schema-utils "^3.0.0"
+
 file-uri-to-path@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz#553a7b8446ff6f684359c445f1e37a05dacc33dd"
@@ -4154,6 +4162,18 @@ modern-normalize@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/modern-normalize/-/modern-normalize-1.0.0.tgz#539d84a1e141338b01b346f3e27396d0ed17601e"
   integrity sha512-1lM+BMLGuDfsdwf3rsgBSrxJwAZHFIrQ8YR61xIqdHo0uNKI9M52wNpHSrliZATJp51On6JD0AfRxd4YGSU0lw==
+
+monaco-editor-webpack-plugin@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/monaco-editor-webpack-plugin/-/monaco-editor-webpack-plugin-2.0.0.tgz#196052f23678285deca7a7baf4d7aebe9d1ff9e1"
+  integrity sha512-z3nUGhnNis8eHcPepqrxyt3XwrnHD76E4KwV2ozWlBwYM6B3R5YYqzy40ECfJWqRFcwT4DhaLYaXOk5ym4MZhA==
+  dependencies:
+    loader-utils "^2.0.0"
+
+monaco-editor@^0.21.2:
+  version "0.21.2"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.21.2.tgz#37054e63e480d51a2dd17d609dcfb192304d5605"
+  integrity sha512-jS51RLuzMaoJpYbu7F6TPuWpnWTLD4kjRW0+AZzcryvbxrTwhNy1KC9yboyKpgMTahpUbDUsuQULoo0GV1EPqg==
 
 ms@2.0.0:
   version "2.0.0"

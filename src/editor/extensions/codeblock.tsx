@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Node as ProsemirrorNode, NodeSpec, NodeType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 
-import { ExtensionType, IExtension, IInitOpts, IKeymapOptions } from '../base';
+import { ExtensionType, IExtension, IInitOpts, IKeyMap, IKeymapOptions } from '../base';
 import FormInput, { IField } from '../components/FormInput';
 import { isInParentNodeOfType, toggleBlockType } from '../commands/block';
 import FloatViewPlugin from './floatView';
@@ -19,7 +19,7 @@ export default class CodeBlock implements IExtension {
   type = ExtensionType.Node;
   editor: EditorView;
 
-  constructor(private options?: ICodeBlockOptions) {}
+  constructor(public options?: ICodeBlockOptions) {}
 
   init({ editor }: IInitOpts) {
     this.editor = editor;
@@ -38,7 +38,7 @@ export default class CodeBlock implements IExtension {
           default: '',
         },
         showLineNumbers: {
-          default: false,
+          default: true,
         }
       },
       parseDOM: [{
@@ -61,7 +61,6 @@ export default class CodeBlock implements IExtension {
           'pre', {
             'data-language': language,
             spellcheck: 'false',
-            class: 'relative bg-gray-100 p-2 border my-2'
           },
           ['code', 0],
         ];
@@ -70,13 +69,13 @@ export default class CodeBlock implements IExtension {
   }
 
   getKeyMaps({ type, schema }: IKeymapOptions) {
-    return {
-      'Mod-/': {
+    const keyMaps: IKeyMap = {
+      'Mod-Alt-/': {
         description: '',
         handler: toggleBlockType(type as NodeType, schema.nodes[this.options?.defaultBlockType || 'paragraph'] || type),
       },
-      'Mod-l': {
-        description: 'Set language ans other metadata of a code block',
+      'Mod-Alt-L': {
+        description: 'Set language and other metadata of a code block',
         handler: (state: EditorState, dispatch?: (tr: Transaction) => void) => {
           const floatPlugin = this.options?.floatPlugin ?? null;
 
@@ -131,6 +130,8 @@ export default class CodeBlock implements IExtension {
           return true;
         },
       }
-    }
+    };
+
+    return keyMaps;
   }
 }

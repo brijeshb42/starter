@@ -11,7 +11,7 @@ import {
   Transaction,
   Plugin,
 } from 'prosemirror-state';
-import { EditorView, NodeView } from 'prosemirror-view';
+import { Decoration, EditorView, NodeView } from 'prosemirror-view';
 // import { EditorView } from 'prosemirror-view';
 
 export enum ExtensionType {
@@ -50,5 +50,11 @@ export interface IExtension {
   getSchema?(): MarkSpec | NodeSpec;
   getPlugins?(): Plugin[];
   getKeyMaps?(options?: IKeymapOptions): IKeyMap;
-  getNodeView?(node: Node, view: EditorView, getPos: (() => number) | boolean): NodeView;
+  getNodeView?(node: Node, view: EditorView, getPos: boolean | (() => number), decorations: Decoration<{[key: string]: any;}>[]): NodeView;
 }
+
+export const ALIGNMENT = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
