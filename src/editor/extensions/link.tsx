@@ -1,12 +1,12 @@
 /** @jsx h */
 import { h } from 'preact';
 import { Mark, MarkSpec } from 'prosemirror-model';
-import { EditorState, Plugin, Transaction } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 
 import { ExtensionType, IExtension, IInitOpts } from '../base';
 import FormInput, { IField } from '../components/FormInput';
 import FloatViewPlugin from './floatView';
-import { EditorView } from 'prosemirror-view';
+import { Decoration, DecorationSet, EditorView } from 'prosemirror-view';
 
 interface ILinkOptions {
   openOnClick?: boolean;
@@ -16,9 +16,8 @@ interface ILinkOptions {
 export default class Link implements IExtension {
   name = 'link';
   type = ExtensionType.Mark;
-  editor: EditorView;
-
-  constructor(private options?: ILinkOptions) {}
+  private editor: EditorView;
+  constructor(private options?: ILinkOptions) { }
 
   init({ editor }: IInitOpts) {
     this.editor = editor;
@@ -68,7 +67,7 @@ export default class Link implements IExtension {
   getKeyMaps() {
     return {
       'Mod-k': {
-        description: 'Add link to selected text or update data if cursor is inside a link',
+        description: 'Add link to selected text or update metadata if cursor is inside a link',
         handler: (state: EditorState, dispatch?: (tr: Transaction) => void) => {
           const floatPlugin = this.options?.floatPlugin;
           if (!floatPlugin) {
@@ -114,6 +113,11 @@ export default class Link implements IExtension {
             name: 'newTab',
           }];
 
+          this.editor.dispatch(this.editor.state.tr.setMeta('dummySelection', {
+            from: selection.from,
+            to: selection.to,
+          }));
+          const newState = this.editor.state;
           floatPlugin.mount(
             <FormInput
               fields={fields}
@@ -122,7 +126,7 @@ export default class Link implements IExtension {
                 floatPlugin.unmount();
 
                 // avoid any descrepancy
-                if (state !== this.editor.state) {
+                if (newState !== this.editor.state) {
                   return;
                 }
                 let tr = state.tr;
@@ -144,7 +148,7 @@ export default class Link implements IExtension {
               }}
               submitText="Done"
             />
-           );
+          );
           return false;
         },
       }
@@ -152,34 +156,53 @@ export default class Link implements IExtension {
   }
 
   getPlugins() {
-    return [
-      new Plugin({
-        props: {
-          handleClick: (view, pos, ev) => {
-            const openOnClick = this.options?.openOnClick ?? true;
-            if (!openOnClick) {
-              return false;
-            }
-            if (!(ev.ctrlKey && ev.altKey)) {
-              return false;
-            }
-            const node = view.state.doc.nodeAt(pos);
-            if (!node || !node.marks.length) {
-              return false;
-            }
-
-            const mark = node.marks.find((m) => m.type.name === this.name);
-            if (!mark) {
-              return false;
-            }
-
-            ev.preventDefault();
-            ev.stopPropagation();
-            window.open(mark.attrs.href);
-            return true;
+    const key = new PluginKey('linkDecoration');
+    const plugin = new Plugin({
+      key,
+      state: {
+        init: () => { },
+        apply: (tr: Transaction) => {
+          const pos = tr.getMeta('dummySelection') as { from: number, to: number };
+          if (!pos) {
+            return null;
           }
+
+          return DecorationSet.create(tr.doc, [
+            Decoration.inline(pos.from, pos.to, {
+              class: 'dummySelection',
+            }),
+          ]);
         },
-      }),
-    ];
+      },
+      props: {
+        handleClick: (view, pos, ev) => {
+          const openOnClick = this.options?.openOnClick ?? true;
+          if (!openOnClick) {
+            return false;
+          }
+          if (!(ev.ctrlKey && ev.altKey)) {
+            return false;
+          }
+          const node = view.state.doc.nodeAt(pos);
+          if (!node || !node.marks.length) {
+            return false;
+          }
+
+          const mark = node.marks.find((m) => m.type.name === this.name);
+          if (!mark) {
+            return false;
+          }
+
+          ev.preventDefault();
+          ev.stopPropagation();
+          window.open(mark.attrs.href);
+          return true;
+        },
+        decorations(state) {
+          return this.getState(state);
+        },
+      },
+    });
+    return [plugin];
   }
 }

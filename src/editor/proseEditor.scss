@@ -5,6 +5,10 @@
     @apply border-solid border-l-4 border-blue-500 my-3 pl-3 pt-1 pb-1;
   }
 
+  .dummySelection {
+    @apply bg-blue-300;
+  }
+
   h1,
   h2,
   h3,
