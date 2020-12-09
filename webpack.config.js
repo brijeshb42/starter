@@ -2,6 +2,8 @@ const path = require('path');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MonacoPlugin = require('monaco-editor-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -9,12 +11,13 @@ module.exports = {
 
   // webpack will take the files from ./src/index
   entry: './src/index',
-  devtool: 'inline-source-map',
+  devtool: isDevelopment ? 'inline-source-map' : 'source-map',
+  mode: isDevelopment ? 'development' : 'production',
 
   // and output it into /dist as bundle.js
   output: {
     path: path.join(__dirname, '/dist'),
-    filename: '[name].bundle.js',
+    filename: isDevelopment ? '[name].bundle.js' : '[name].bundle.[contenthash].js',
     publicPath: '/',
   },
 
@@ -51,7 +54,7 @@ module.exports = {
       {
         test: /\.scss$/,
         use: [
-          'style-loader',
+          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
           {loader: 'css-loader', options: {sourceMap: true, importLoaders: 1}},
           {loader: 'postcss-loader', options: {sourceMap: true}},
           {loader: 'sass-loader', options: {sourceMap: true}},
@@ -60,7 +63,7 @@ module.exports = {
       {
         test: /\.css$/,
         use: [
-          'style-loader',
+          isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
           {loader: 'css-loader', options: {sourceMap: true, importLoaders: 1}},
           {loader: 'postcss-loader', options: {sourceMap: true}},
         ],
@@ -70,11 +73,22 @@ module.exports = {
       }
     ]
   },
+  optimization: isDevelopment ? undefined : {
+    minimize: true,
+    minimizer: ['...', new CssMinimizerPlugin()],
+    runtimeChunk: {
+      name: 'runtime',
+    },
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/index.html'
     }),
     isDevelopment && new ReactRefreshWebpackPlugin(),
     new MonacoPlugin(),
+    !isDevelopment && new MiniCssExtractPlugin({
+      filename: 'styles/[name].[contenthash].css',
+      chunkFilename: '[id].css',
+    }),
   ].filter(Boolean)
 };

@@ -1,13 +1,13 @@
-import { IKeyMap, IKeymapOptions } from 'editor/base';
-import * as monaco from 'monaco-editor';
 import { exitCode } from 'prosemirror-commands';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { TextSelection, Selection, EditorState, Transaction } from 'prosemirror-state';
 import { EditorView, NodeView } from 'prosemirror-view';
+import type { editor as MonacoEditor } from 'monaco-editor';
 
 import CodeBlock from './codeblock';
+import { IKeyMap, IKeymapOptions } from '../base';
 
-type ICodeEditor = monaco.editor.IStandaloneCodeEditor & {
+type ICodeEditor = MonacoEditor.IStandaloneCodeEditor & {
   onWillType(listener: (ev: string) => void): void;
 };
 
@@ -24,15 +24,18 @@ class MonacoEditorView implements NodeView {
   dom: HTMLDivElement;
   private languageDomContainer: HTMLElement;
   private languageDom: HTMLButtonElement;
-  private editor: ICodeEditor
+  private editor?: ICodeEditor
   private updating = false;
   private incomingChanges = false;
   private mod: 'metaKey' | 'ctrlKey' = /Mac/.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
   private lastLang: string;
   private timerId: NodeJS.Timeout;
+  private pendingFocus = false;
+  private monaco: typeof import('monaco-editor/esm/vs/editor/editor.api');
 
   constructor(private node: ProsemirrorNode, private view: EditorView, private getPos: (() => number) | boolean, private keyMaps?: IKeyMap) {
     this.dom = document.createElement('div');
+    this.dom.textContent = 'Loading...';
     this.dom.className = 'monaco-container';
     this.dom.style.minHeight = '200px';
     this.languageDomContainer = document.createElement('div');
@@ -41,109 +44,7 @@ class MonacoEditorView implements NodeView {
     this.languageDom.className = 'monaco-language-element';
     this.languageDom.textContent = node.attrs.language || 'Set language';
     this.languageDom.addEventListener('mousedown', this.triggerLanguageChange);
-    this.editor = monaco.editor.create(this.dom, {
-      value: this.node.textContent,
-      lineNumbers: node.attrs.showLineNumbers ? 'on' : 'off',
-      language: node.attrs.language,
-      scrollBeyondLastLine: false,
-      minimap: {
-        enabled: false,
-      },
-      fontSize: 14,
-      fontLigatures: true,
-      contextmenu: false,
-      tabSize: 2,
-      insertSpaces: true,
-      detectIndentation: false,
-    }) as ICodeEditor;
-    this.lastLang = node.attrs.language;
-    this.timerId = setTimeout(this.resize, 1);
-    this.editor.onDidChangeModelContent(() => {
-      if (!this.updating) {
-        this.valueChanged();
-        this.forwardSelection();
-      }
-      this.incomingChanges = false;
-      this.adjustHeight();
-    });
-    this.editor.onDidFocusEditorText(() => {
-      this.forwardSelection();
-      this.dom.classList.add('monaco-container--focussed');
-      this.languageDom.disabled = false;
-    });
-    this.editor.onDidBlurEditorText(() => {
-      this.dom.classList.remove('monaco-container--focussed');
-      this.languageDom.disabled = true;
-    });
-    this.editor.onWillType(() => {
-      this.incomingChanges = true;
-    });
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_L, this.triggerLanguageChange);
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.US_SLASH, this.toggleBlock);
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      if (exitCode(view.state, view.dispatch)) {
-        view.focus();
-      }
-    });
-    this.editor.onKeyDown((ev) => {
-      // handle undo/redo
-      // commenting because it is not trivial. undo/redo in code editor will register as normal text change in the
-      // main prosemirror editor and not as undo/redo stack. This is OK for now.
-      // if (ev[this.mod] && (ev.keyCode === monaco.KeyCode.KEY_Z || ev.keyCode === monaco.KeyCode.KEY_Y)) {
-      //   if (ev.shiftKey || ev.keyCode === monaco.KeyCode.KEY_Y) {
-      //     redo(view.state, view.dispatch);
-      //   } else if (ev.keyCode === monaco.KeyCode.KEY_Z) {
-      //     undo(view.state, view.dispatch);
-      //   }
-      //   return;
-      // }
-
-      if (ev.ctrlKey || ev.shiftKey || ev.altKey || ev.metaKey) {
-        return;
-      }
-
-      // move cursor outside code block seemlessly
-      switch (ev.keyCode) {
-        case monaco.KeyCode.Backspace:
-          if (!this.editor.getValue()) {
-            ev.preventDefault();
-            this.toggleBlock();
-          }
-          return;
-        case monaco.KeyCode.UpArrow:
-          ev.preventDefault();
-          this.maybeEscape('line', -1);
-          return;
-        case monaco.KeyCode.LeftArrow:
-          ev.preventDefault();
-          this.maybeEscape('char', -1);
-          return;
-        case monaco.KeyCode.DownArrow:
-          ev.preventDefault();
-          this.maybeEscape('line', 1);
-          return;
-        case monaco.KeyCode.RightArrow:
-          ev.preventDefault();
-          this.maybeEscape('char', 1);
-          return;
-      }
-    });
-    this.editor.onDidChangeCursorPosition(() => {
-      if (!this.updating || !this.incomingChanges) {
-        this.forwardSelection();
-      }
-    });
-    this.editor.addOverlayWidget({
-      getId() {
-        return 'editor.language.overlayWidget';
-      },
-      getDomNode: () => this.languageDomContainer,
-      getPosition() {
-        return {
-          preference: monaco.editor.OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER,
-        };
-      }
-    });
+    this.loadMonaco();
     window.addEventListener('resize', this.resize);
   }
 
@@ -157,7 +58,125 @@ class MonacoEditorView implements NodeView {
     this.view.focus();
   };
 
+  private loadMonaco() {
+    import('monaco-editor').then((monaco) => {
+      this.monaco = monaco;
+      const { node, view } = this;
+      this.dom.textContent = '';
+      this.editor = monaco.editor.create(this.dom, {
+        value: node.textContent,
+        lineNumbers: node.attrs.showLineNumbers ? 'on' : 'off',
+        language: node.attrs.language,
+        scrollBeyondLastLine: false,
+        minimap: {
+          enabled: false,
+        },
+        fontSize: 14,
+        fontLigatures: true,
+        contextmenu: false,
+        tabSize: 2,
+        insertSpaces: true,
+        detectIndentation: false,
+      }) as ICodeEditor;
+      this.lastLang = node.attrs.language;
+      this.timerId = setTimeout(this.resize, 1);
+      this.editor.onDidChangeModelContent(() => {
+        if (!this.updating) {
+          this.valueChanged();
+          this.forwardSelection();
+        }
+        this.incomingChanges = false;
+        this.adjustHeight();
+      });
+      this.editor.onDidFocusEditorText(() => {
+        this.forwardSelection();
+        this.dom.classList.add('monaco-container--focussed');
+        this.languageDom.disabled = false;
+      });
+      this.editor.onDidBlurEditorText(() => {
+        this.dom.classList.remove('monaco-container--focussed');
+        this.languageDom.disabled = true;
+      });
+      this.editor.onWillType(() => {
+        this.incomingChanges = true;
+      });
+      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_L, this.triggerLanguageChange);
+      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.US_SLASH, this.toggleBlock);
+      this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+        if (exitCode(view.state, view.dispatch)) {
+          view.focus();
+        }
+      });
+      this.editor.onKeyDown((ev) => {
+        // handle undo/redo
+        // commenting because it is not trivial. undo/redo in code editor will register as normal text change in the
+        // main prosemirror editor and not as undo/redo stack. This is OK for now.
+        // if (ev[this.mod] && (ev.keyCode === monaco.KeyCode.KEY_Z || ev.keyCode === monaco.KeyCode.KEY_Y)) {
+        //   if (ev.shiftKey || ev.keyCode === monaco.KeyCode.KEY_Y) {
+        //     redo(view.state, view.dispatch);
+        //   } else if (ev.keyCode === monaco.KeyCode.KEY_Z) {
+        //     undo(view.state, view.dispatch);
+        //   }
+        //   return;
+        // }
+
+        if (ev.ctrlKey || ev.shiftKey || ev.altKey || ev.metaKey) {
+          return;
+        }
+
+        // move cursor outside code block seemlessly
+        switch (ev.keyCode) {
+          case monaco.KeyCode.Backspace:
+            if (!this.editor!.getValue()) {
+              ev.preventDefault();
+              this.toggleBlock();
+            }
+            return;
+          case monaco.KeyCode.UpArrow:
+            ev.preventDefault();
+            this.maybeEscape('line', -1);
+            return;
+          case monaco.KeyCode.LeftArrow:
+            ev.preventDefault();
+            this.maybeEscape('char', -1);
+            return;
+          case monaco.KeyCode.DownArrow:
+            ev.preventDefault();
+            this.maybeEscape('line', 1);
+            return;
+          case monaco.KeyCode.RightArrow:
+            ev.preventDefault();
+            this.maybeEscape('char', 1);
+            return;
+        }
+      });
+      this.editor.onDidChangeCursorPosition(() => {
+        if (!this.updating || !this.incomingChanges) {
+          this.forwardSelection();
+        }
+      });
+      this.editor.addOverlayWidget({
+        getId() {
+          return 'editor.language.overlayWidget';
+        },
+        getDomNode: () => this.languageDomContainer,
+        getPosition() {
+          return {
+            preference: monaco.editor.OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER,
+          };
+        }
+      });
+
+      if (this.pendingFocus) {
+        this.editor.focus();
+      }
+    });
+  }
+
   private adjustHeight() {
+    if (!this.editor) {
+      return;
+    }
     const contentHeight = this.editor.getContentHeight();
     let height = 500;
     if (contentHeight <= 200) {
@@ -170,10 +189,13 @@ class MonacoEditorView implements NodeView {
   }
 
   resize = () => {
-    this.editor.layout();
+    this.editor?.layout();
   };
 
   maybeEscape(unit: 'char' | 'line', dir: 1 | -1) {
+    if (!this.editor) {
+      return;
+    }
     const pos = this.editor.getPosition()!;
     const model = this.editor.getModel()!;
     const sel = this.editor.getSelection()!;
@@ -193,15 +215,15 @@ class MonacoEditorView implements NodeView {
 
   asProseMirrorSelection(doc: ProsemirrorNode): TextSelection {
     let offset = typeof this.getPos === 'function' ? this.getPos() + 1 : 0;
-    const edSel = this.editor.getSelection()!;
-    const model = this.editor.getModel()!;
+    const edSel = this.editor!.getSelection()!;
+    const model = this.editor!.getModel()!;
     let anchor = model.getOffsetAt(edSel.getStartPosition()) + offset;
     let head = model.getOffsetAt(edSel.getEndPosition()) + offset;
     return TextSelection.create(doc, anchor, head)
   }
 
   forwardSelection() {
-    if (!this.editor.hasTextFocus()) {
+    if (!this.editor?.hasTextFocus()) {
       return;
     }
     const { state } = this.view;
@@ -212,16 +234,20 @@ class MonacoEditorView implements NodeView {
   }
 
   setSelection(anchor: number, head: number) {
+    if (!this.editor) {
+      this.pendingFocus = true;
+      return;
+    }
     this.editor.focus();
     this.updating = true;
     const model = this.editor.getModel()!;
-    const sel = monaco.Selection.fromPositions(model.getPositionAt(anchor), model.getPositionAt(head));
+    const sel = this.monaco.Selection.fromPositions(model.getPositionAt(anchor), model.getPositionAt(head));
     this.editor.setSelection(sel);
     this.updating = false;
   }
 
   valueChanged() {
-    const change = computeChange(this.node.textContent, this.editor.getValue());
+    const change = computeChange(this.node.textContent, this.editor!.getValue());
     if (change) {
       const start = typeof this.getPos === 'function' ? this.getPos() + 1 : 0;
       const tr = this.view.state.tr.replaceWith(
@@ -236,6 +262,10 @@ class MonacoEditorView implements NodeView {
       return false;
     }
 
+    if (!this.editor) {
+      return true;
+    }
+
     if (this.node.attrs.showLineNumbers !== node.attrs.showLineNumbers) {
       this.editor.updateOptions({
         lineNumbers: node.attrs.showLineNumbers ? 'on' : 'off',
@@ -245,7 +275,7 @@ class MonacoEditorView implements NodeView {
 
     if (node.attrs.language !== this.lastLang) {
       this.lastLang = node.attrs.language;
-      monaco.editor.setModelLanguage(this.editor.getModel()!, this.lastLang);
+      this.monaco.editor.setModelLanguage(this.editor.getModel()!, this.lastLang);
       this.languageDom.textContent = this.lastLang || 'Set language';
     }
 
@@ -253,7 +283,7 @@ class MonacoEditorView implements NodeView {
     if (change) {
       this.updating = true;
       const model = this.editor.getModel()!;
-      const selection = monaco.Selection.fromPositions(model.getPositionAt(change.from), model.getPositionAt(change.to));
+      const selection = this.monaco.Selection.fromPositions(model.getPositionAt(change.from), model.getPositionAt(change.to));
       this.editor.executeEdits('', [{
         range: selection,
         text: change.text,
@@ -265,7 +295,7 @@ class MonacoEditorView implements NodeView {
   }
 
   selectNode() {
-    this.editor.focus();
+    this.editor?.focus();
   }
 
   stopEvent(ev: Event) {
@@ -279,7 +309,7 @@ class MonacoEditorView implements NodeView {
     clearTimeout(this.timerId);
     this.languageDom.removeEventListener('mousedown', this.triggerLanguageChange);
     window.removeEventListener('resize', this.resize);
-    this.editor.dispose();
+    this.editor?.dispose();
   }
 }
 

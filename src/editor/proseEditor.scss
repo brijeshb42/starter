@@ -1,3 +1,4 @@
+/* purgecss start ignore */
 .ProseMirror {
   @apply min-h-full;
 
@@ -26,8 +27,8 @@
     @apply relative border border-blue-600 bg-blue-100 rounded-sm p-2;
 
     &::before {
-      @apply absolute top-0 right-1 capitalize;
       content: attr(data-language);
+      @apply absolute top-0 right-0 opacity-50 text-xs;
     }
   }
 
@@ -94,3 +95,4 @@
     }
   }
 }
+/* purgecss end ignore */

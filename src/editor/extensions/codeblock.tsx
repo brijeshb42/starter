@@ -38,7 +38,7 @@ export default class CodeBlock implements IExtension {
         language: {
           default: '',
         },
-        showLineNumbers: {
+        lines: {
           default: true,
         }
       },
@@ -52,7 +52,7 @@ export default class CodeBlock implements IExtension {
 
           return {
             language: (node as Element).getAttribute('data-language'),
-            showLineNumbers: false,
+            lines: false,
           };
         },
       }],
@@ -101,7 +101,7 @@ export default class CodeBlock implements IExtension {
 
           const values = {
             language: parent.attrs.language || '',
-            showLineNumbers: parent.attrs.showLineNumbers || false,
+            lines: parent.attrs.lines || false,
           };
 
           const fields: IField[] = [{
@@ -112,8 +112,8 @@ export default class CodeBlock implements IExtension {
           }, {
             type: 'boolean',
             label: 'Show line numbers',
-            value: values.showLineNumbers,
-            name: 'showLineNumbers',
+            value: values.lines,
+            name: 'lines',
           }];
           
           floatPlugin.mount(

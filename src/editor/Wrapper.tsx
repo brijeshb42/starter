@@ -20,7 +20,6 @@ import ArrowHandler from './extensions/imageEmbedArrow';
 
 import './Wrapper.scss';
 import './proseEditor.scss';
-import './extensions/codeblock.css';
 import CaptionPlaceholder from './extensions/captionPlaceholder';
 
 export default function EditorWrapper() {
