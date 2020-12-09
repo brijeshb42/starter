@@ -22,7 +22,8 @@ function computeChange(oldVal: string, newVal: string) {
 
 class MonacoEditorView implements NodeView {
   dom: HTMLDivElement;
-  private languageDom: HTMLElement;
+  private languageDomContainer: HTMLElement;
+  private languageDom: HTMLButtonElement;
   private editor: ICodeEditor
   private updating = false;
   private incomingChanges = false;
@@ -34,10 +35,12 @@ class MonacoEditorView implements NodeView {
     this.dom = document.createElement('div');
     this.dom.className = 'monaco-container';
     this.dom.style.minHeight = '200px';
-    this.languageDom = document.createElement('div');
+    this.languageDomContainer = document.createElement('div');
+    this.languageDom = document.createElement('button');
+    this.languageDomContainer.appendChild(this.languageDom);
     this.languageDom.className = 'monaco-language-element';
-    this.languageDom.textContent = node.attrs.language || 'No language';
-    this.languageDom.addEventListener('click', this.triggerLanguageChange);
+    this.languageDom.textContent = node.attrs.language || 'Set language';
+    this.languageDom.addEventListener('mousedown', this.triggerLanguageChange);
     this.editor = monaco.editor.create(this.dom, {
       value: this.node.textContent,
       lineNumbers: node.attrs.showLineNumbers ? 'on' : 'off',
@@ -54,7 +57,7 @@ class MonacoEditorView implements NodeView {
       detectIndentation: false,
     }) as ICodeEditor;
     this.lastLang = node.attrs.language;
-    this.timerId = setTimeout(this.resize, 5);
+    this.timerId = setTimeout(this.resize, 1);
     this.editor.onDidChangeModelContent(() => {
       if (!this.updating) {
         this.valueChanged();
@@ -66,20 +69,17 @@ class MonacoEditorView implements NodeView {
     this.editor.onDidFocusEditorText(() => {
       this.forwardSelection();
       this.dom.classList.add('monaco-container--focussed');
+      this.languageDom.disabled = false;
     });
     this.editor.onDidBlurEditorText(() => {
       this.dom.classList.remove('monaco-container--focussed');
+      this.languageDom.disabled = true;
     });
     this.editor.onWillType(() => {
       this.incomingChanges = true;
     });
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_L, () => {
-      this.triggerLanguageChange();
-    });
-    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.US_SLASH, () => {
-      this.keyMaps!['Mod-Alt-/'].handler(this.view.state, this.view.dispatch);
-      this.view.focus();
-    });
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_L, this.triggerLanguageChange);
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.US_SLASH, this.toggleBlock);
     this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       if (exitCode(view.state, view.dispatch)) {
         view.focus();
@@ -104,6 +104,12 @@ class MonacoEditorView implements NodeView {
 
       // move cursor outside code block seemlessly
       switch (ev.keyCode) {
+        case monaco.KeyCode.Backspace:
+          if (!this.editor.getValue()) {
+            ev.preventDefault();
+            this.toggleBlock();
+          }
+          return;
         case monaco.KeyCode.UpArrow:
           ev.preventDefault();
           this.maybeEscape('line', -1);
@@ -127,7 +133,17 @@ class MonacoEditorView implements NodeView {
         this.forwardSelection();
       }
     });
-    this.editor.addOverlayWidget(this);
+    this.editor.addOverlayWidget({
+      getId() {
+        return 'editor.language.overlayWidget';
+      },
+      getDomNode: () => this.languageDomContainer,
+      getPosition() {
+        return {
+          preference: monaco.editor.OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER,
+        };
+      }
+    });
     window.addEventListener('resize', this.resize);
   }
 
@@ -136,19 +152,10 @@ class MonacoEditorView implements NodeView {
     this.keyMaps!['Mod-Alt-L'].handler(this.view.state, this.view.dispatch);
   }
 
-  getId() {
-    return 'editor.language.overlayWidget';
-  }
-
-  getDomNode() {
-    return this.languageDom;
-  }
-
-  getPosition() {
-    return {
-      preference: monaco.editor.OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER,
-    };
-  }
+  toggleBlock = () => {
+    this.keyMaps!['Mod-Alt-/'].handler(this.view.state, this.view.dispatch);
+    this.view.focus();
+  };
 
   private adjustHeight() {
     const contentHeight = this.editor.getContentHeight();
@@ -239,7 +246,7 @@ class MonacoEditorView implements NodeView {
     if (node.attrs.language !== this.lastLang) {
       this.lastLang = node.attrs.language;
       monaco.editor.setModelLanguage(this.editor.getModel()!, this.lastLang);
-      this.languageDom.textContent = this.lastLang || 'No language';
+      this.languageDom.textContent = this.lastLang || 'Set language';
     }
 
     const change = computeChange(this.editor.getValue(), node.textContent);
@@ -270,7 +277,7 @@ class MonacoEditorView implements NodeView {
 
   destroy() {
     clearTimeout(this.timerId);
-    this.languageDom.removeEventListener('click', this.triggerLanguageChange);
+    this.languageDom.removeEventListener('mousedown', this.triggerLanguageChange);
     window.removeEventListener('resize', this.resize);
     this.editor.dispose();
   }

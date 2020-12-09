@@ -19,18 +19,28 @@
   }
 
   pre[data-language] {
-    @apply border-solid border-l-4 border-blue-500 my-3 pl-3 pt-1 pb-1;
+    @apply relative border border-blue-600 bg-blue-100 rounded-sm p-2;
+
+    &::before {
+      @apply absolute top-0 right-1 capitalize;
+      content: attr(data-language);
+    }
   }
 
   a {
     @apply text-blue-700 underline;
   }
 
+
   .monaco-container {
     @apply mt-2 border border-blue-300;
 
     .monaco-language-element {
-      @apply text-sm capitalize py-1 px-2 border cursor-pointer;
+      @apply bg-white text-sm text-blue-600 capitalize py-1 px-2 border border-blue-600 cursor-pointer rounded-sm;
+
+      &:disabled {
+        @apply border-blue-200 text-blue-200 cursor-not-allowed;
+      }
     }
 
     &--focussed {
@@ -39,18 +49,44 @@
   }
 
   figure[data-embed] {
-    @apply mt-2 border border-blue-100;
+    @apply border border-blue-100;
+
+    iframe {
+      @apply mx-auto pt-2;
+    }
+  }
+
+  figure[data-image] {
+    @apply mt-2;
+
+    .image-container {
+      @apply flex justify-center;
+    }
+  }
+
+  figure[data-embed],
+  figure[data-image] {
+    .embed-info {
+      @apply py-10 text-center text-lg font-bold;
+
+      button {
+        @apply border border-blue-600 py-1 px-2 rounded-sm text-sm text-blue-600;
+      }
+    }
 
     figcaption {
       @apply mt-1 mb-3 text-center text-sm;
     }
 
-    iframe {
-      @apply mx-auto pt-2;
-    }
+    &.empty-caption {
+      figcaption {
+        @apply relative;
 
-    .embed-info {
-      @apply py-10 text-center text-lg font-bold;
+        &::before {
+          @apply absolute select-none text-gray-400;
+          content: 'Caption...';
+        }
+      }
     }
   }
 }

@@ -53,7 +53,7 @@ export default function FormInput(props: IProps) {
   }, []);
 
   return (
-    <form className={className} onSubmit={handleSubmit} title={title} style={{minWidth: 400}}>
+    <form autoComplete="off" className={className} onSubmit={handleSubmit} title={title} style={{minWidth: 400}}>
       {fields.map((field) => {
         const id = `render-${count.current}-${field.name}`;
         const className = field.type === 'boolean' ? 'my-1 block' : 'my-1 block w-full text-xs';
@@ -68,6 +68,7 @@ export default function FormInput(props: IProps) {
                 value={field.type === 'boolean' ? undefined : field.value}
                 checked={field.type === 'boolean' ? field.value : undefined}
                 ref={(node) => setRef(field.name, node)}
+                autoComplete="off"
               />
             </label>
             {errors[field.name] && <span>{errors[field.name]}</span>}

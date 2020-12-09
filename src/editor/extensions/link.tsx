@@ -99,14 +99,14 @@ export default class Link implements IExtension {
 
           const fields: IField[] = [{
             type: 'text',
-            label: 'Link Title',
-            value: values.title,
-            name: 'title',
-          }, {
-            type: 'text',
             label: 'Link URL',
             value: values.href,
             name: 'href',
+          }, {
+            type: 'text',
+            label: 'Link Title',
+            value: values.title,
+            name: 'title',
           }, {
             type: 'boolean',
             label: 'Should open in new tab',
@@ -120,20 +120,16 @@ export default class Link implements IExtension {
               title="Add link details"
               onSubmit={(values) => {
                 floatPlugin.unmount();
+
+                // avoid any descrepancy
+                if (state !== this.editor.state) {
+                  return;
+                }
                 let tr = state.tr;
                 if (!values.href) {
-                  return;
-
-                  // first find the range of the mark if selection is empty,
-                  // then removeMark for that range
-                  // if (!mark) {
-                  //   return;
-                  // }
-                  // let selectionToUse = selection;
-                  // if (selection.empty) {
-                  //   sele
-                  // }Vk
-                  // tr = tr.removeMark(selection.from, selection.to, state.schema.marks[this.name])
+                  if (mark) {
+                    tr = tr.removeMark(selection.from, selection.to, state.schema.marks[this.name]);
+                  }
                 } else {
                   tr = tr.addMark(selection.from, selection.to, state.schema.marks[this.name].create(values)).scrollIntoView();
                 }

@@ -15,10 +15,13 @@ import FloatViewPlugin from './extensions/floatView';
 import Link from './extensions/link';
 import CodeMark from './extensions/codemark';
 import Embed from './extensions/embed';
+import SimpleImage from './extensions/simpleImage';
+import ArrowHandler from './extensions/imageEmbedArrow';
 
 import './Wrapper.scss';
 import './proseEditor.scss';
 import './extensions/codeblock.css';
+import CaptionPlaceholder from './extensions/captionPlaceholder';
 
 export default function EditorWrapper() {
   const ref = React.useRef<null | any>(null);
@@ -38,12 +41,13 @@ export default function EditorWrapper() {
     const boldExt = new Bold();
     const paragraphExt = new Paragraph();
     const headingExt = new Heading();
-    // const quoteCaptionExt = new QuoteCaption();
-    // const quoteExt = new Quote({
-    //   quoteNode: paragraphExt.name,
-    //   captionNode: quoteCaptionExt.name,
-    // });
     const floatViewPlugin = new FloatViewPlugin();
+    const embedExt = new Embed({
+      floatPlugin: floatViewPlugin,
+    });
+    const imageExt = new SimpleImage({
+      floatPlugin: floatViewPlugin,
+    });
     const editor = new ProseEditor(ref.current, {
       extensions: [
         new Document(),
@@ -52,9 +56,8 @@ export default function EditorWrapper() {
         new CodeBlock({
           floatPlugin: floatViewPlugin,
         }),
-        new Embed({
-          floatPlugin: floatViewPlugin,
-        }),
+        embedExt,
+        imageExt,
         new BlockQuote(),
         new Text(),
         boldExt,
@@ -68,6 +71,18 @@ export default function EditorWrapper() {
           supportedBlocks: [headingExt.name, paragraphExt.name],
         }),
         floatViewPlugin,
+        new CaptionPlaceholder({
+          nodeNames: {
+            [imageExt.name]: true,
+            [embedExt.name]: true,
+          },
+        }),
+        new ArrowHandler({
+          nodeNames: {
+            [imageExt.name]: true,
+            [embedExt.name]: true,
+          },
+        }),
       ],
       useDefaultExtensions: true,
     });
