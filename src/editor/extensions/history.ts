@@ -1,4 +1,5 @@
-import { history, undo, redo } from 'prosemirror-history';
+import { undo, redo } from 'prosemirror-history';
+// import { keymap } from 'prosemirror-keymap';
 
 import { IExtension, ExtensionType } from '../base';
 
@@ -19,9 +20,12 @@ export class HistoryPlugin implements IExtension {
     };
   }
 
-  getPlugins() {
-    return [
-      history(),
-    ]
-  }
+  // getPlugins() {
+  //   return [
+  //     history(),
+  //     keymap({
+  //       'Mod-z': undoInputRule,
+  //     }),
+  //   ];
+  // }
 }

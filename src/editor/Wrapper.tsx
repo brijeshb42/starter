@@ -21,9 +21,12 @@ import ArrowHandler from './extensions/imageEmbedArrow';
 import './Wrapper.scss';
 import './proseEditor.scss';
 import CaptionPlaceholder from './extensions/captionPlaceholder';
+import ListItem from './extensions/listItem';
+import OrderedList from './extensions/OrderedList';
+import UnorderedList from './extensions/UnorderedList';
 
 export default function EditorWrapper() {
-  const ref = React.useRef<null | any>(null);
+  const ref = React.useRef<null | HTMLDivElement>(null);
   const editorRef = React.useRef<null | ProseEditor>(null);
 
   function handleClick(ev: React.MouseEvent<HTMLDivElement>) {
@@ -47,17 +50,25 @@ export default function EditorWrapper() {
     const imageExt = new SimpleImage({
       floatPlugin: floatViewPlugin,
     });
-    const editor = new ProseEditor(ref.current, {
+    const listItemExt = new ListItem();
+    const editor = new ProseEditor(ref.current!, {
       extensions: [
         new Document(),
         paragraphExt,
         headingExt,
+        listItemExt,
         new CodeBlock({
           floatPlugin: floatViewPlugin,
         }),
         embedExt,
         imageExt,
         new BlockQuote(),
+        new OrderedList({
+          childName: listItemExt.name,
+        }),
+        new UnorderedList({
+          childName: listItemExt.name,
+        }),
         new Text(),
         boldExt,
         new Italic(),
@@ -92,7 +103,12 @@ export default function EditorWrapper() {
       editor.editor!.destroy();
     };
   }, []);
+  
   return (
-    <div className="h-full w-4/5 relative" ref={ref} onClick={handleClick} />
+    <div
+      className="h-full w-4/5 relative"
+      ref={ref}
+      onClick={handleClick}
+     />
   );
 }

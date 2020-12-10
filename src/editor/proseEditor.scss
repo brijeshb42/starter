@@ -23,6 +23,16 @@
     @apply my-2;
   }
 
+  ul, ol {
+    @apply pl-4;
+  }
+  ul {
+    @apply list-disc;
+  }
+  ol {
+    @apply list-decimal;
+  }
+
   pre[data-language] {
     @apply relative border border-blue-600 bg-blue-100 rounded-sm p-2;
 
