@@ -6,7 +6,8 @@
   "scripts": {
     "start": "webpack serve --mode development --hot",
     "build": "NODE_ENV=production webpack --mode production",
-    "check-types": "tsc"
+    "check-types": "tsc",
+    "server": "./pyenv/bin/uvicorn server.main:app --reload"
   },
   "dependencies": {
     "@tailwindcss/forms": "^0.2.1",
