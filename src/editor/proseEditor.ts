@@ -1,6 +1,6 @@
 import { keymap } from 'prosemirror-keymap';
 import { MarkSpec, Node, NodeSpec, Schema } from 'prosemirror-model';
-import { EditorState, Plugin } from 'prosemirror-state';
+import { EditorState, Plugin, TextSelection, Transaction } from 'prosemirror-state';
 import { Decoration, EditorView, NodeView } from 'prosemirror-view';
 
 import { ExtensionType, IExtension, IKeyMap, KeyHandler } from './base';
@@ -10,6 +10,7 @@ import BaseKeymapPlugin from './extensions/keymap';
 interface IOptions {
   extensions?: IExtension[];
   useDefaultExtensions?: boolean;
+  doc?: any;
 }
 
 const defaultOptions: IOptions = {
@@ -50,23 +51,23 @@ export default class ProseEditor {
     if (!this.editor) {
       this.editor = new EditorView(this.node, {
         state: this.state,
-        // dispatchTransaction(tr: Transaction) {
-        //   console.log(tr);
-        //   this.updateState(this.state.apply(tr));
-        // },
-        nodeViews: this.extensions.reduce((acc, ext) => {
-          if (ext.getNodeView) {
+        dispatchTransaction: (tr: Transaction) => {
+          this.state = this.state.apply(tr);
+          this.editor.updateState(this.state);
+        },
+        nodeViews: this.extensions
+          .filter(ext => ext.type !== ExtensionType.Plugin && !!ext.getNodeView)
+          .reduce((acc, ext) => {
             acc[ext.name] = (...args) => ext.getNodeView!(...args);
-          }
-          return acc;
-        }, {} as {
-          [name: string]: (
-            node: Node,
-            view: EditorView,
-            getPos: (() => number) | boolean,
-            decorations: Decoration<{[key: string]: any;}>[]
-          ) => NodeView
-        }),
+            return acc;
+          }, {} as {
+            [name: string]: (
+              node: Node,
+              view: EditorView,
+              getPos: (() => number) | boolean,
+              decorations: Decoration<{ [key: string]: any; }>[]
+            ) => NodeView
+          }),
       });
       this.extensions.filter(ext => !!ext.init).forEach(ext => ext.init!({
         editor: this.editor,
@@ -132,6 +133,7 @@ export default class ProseEditor {
 
   private generateState() {
     this.state = EditorState.create({
+      doc: this.options.doc,
       schema: this.schema,
       plugins: [
         ...this.plugins,
@@ -141,5 +143,13 @@ export default class ProseEditor {
         }, {} as { [key: string]: KeyHandler })),
       ],
     });
+  }
+
+  setDoc(data: Object) {
+    const { tr, doc } = this.editor.state;
+    const newDoc = this.schema.nodeFromJSON(data);
+    const selection = TextSelection.create(doc, 0, doc.content.size);
+    const transaction = tr.setSelection(selection).replaceSelectionWith(newDoc, false);
+    this.editor.dispatch(transaction);
   }
 }

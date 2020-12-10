@@ -58,7 +58,7 @@ class ImageView implements NodeView {
     }
     render(<ImageComponent {...props} onImage={this.handleImageURL} />, this.innerDOM);
   }
-  
+
   handleImageURL = () => {
     this.handleImageMeta(this.view.state, this.view.dispatch);
   };
@@ -79,7 +79,7 @@ export default class SimpleImagePlugin implements IExtension {
   type = ExtensionType.Node;
   editor: EditorView;
 
-  constructor(private options?: IImageBlockOptions) {}
+  constructor(private options?: IImageBlockOptions) { }
 
   init({ editor }: IInitOpts) {
     this.editor = editor;
@@ -103,17 +103,29 @@ export default class SimpleImagePlugin implements IExtension {
         tag: 'figure[data-image]',
         contentElement: 'figcaption',
         getAttrs(node: string | Node) {
-          console.log(node);
-          return null;
-          // return {
-          //   src: typeof node === 'string' ? '' : (node as HTMLImageElement).src,
-          // };
+          if (typeof node === 'string') {
+            return {};
+          }
+          const el = node as Element;
+          const img = el.querySelector('img') as HTMLImageElement;
+
+          if (!img) {
+            return {};
+          }
+
+          return {
+            src: img.src,
+            alt: img.alt || '',
+          };
         }
       }],
       toDOM(node: ProsemirrorNode) {
         return ['figure', {
           'data-image': node.attrs.src,
-        }, 0];
+        }, ['img', {
+          src: node.attrs.src,
+          alt: node.attrs.alt,
+        }], ['figcaption', 0]];
       }
     };
     return schema;
@@ -189,7 +201,7 @@ export default class SimpleImagePlugin implements IExtension {
       },
     };
   }
-  
+
   getNodeView(node: ProsemirrorNode, view: EditorView): NodeView {
     return new ImageView(node, view, this.handleImageMeta);
   }
