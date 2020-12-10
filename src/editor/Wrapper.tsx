@@ -17,13 +17,13 @@ import CodeMark from './extensions/codemark';
 import Embed from './extensions/embed';
 import SimpleImage from './extensions/simpleImage';
 import ArrowHandler from './extensions/imageEmbedArrow';
-
-import './Wrapper.scss';
-import './proseEditor.scss';
 import CaptionPlaceholder from './extensions/captionPlaceholder';
 import ListItem from './extensions/listItem';
 import OrderedList from './extensions/OrderedList';
 import UnorderedList from './extensions/UnorderedList';
+
+import './Wrapper.scss';
+import './proseEditor.scss';
 
 export default function EditorWrapper() {
   const ref = React.useRef<null | HTMLDivElement>(null);

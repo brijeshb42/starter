@@ -1,6 +1,8 @@
 /* purgecss start ignore */
+@import "prosemirror-view/style/prosemirror.css";
+
 .ProseMirror {
-  @apply min-h-full;
+  @apply p-3 min-h-full;
 
   blockquote {
     @apply border-solid border-l-4 border-blue-500 my-3 pl-3 pt-1 pb-1;
