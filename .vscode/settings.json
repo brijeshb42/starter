@@ -1,4 +1,5 @@
 {
     "editor.tabSize": 2,
-    "editor.fontSize": 14
+    "editor.fontSize": 14,
+    "python.pythonPath": "pyenv/bin/python"
 }
