@@ -7,7 +7,9 @@
     "start": "webpack serve --mode development --hot",
     "build": "NODE_ENV=production webpack --mode production",
     "check-types": "tsc",
-    "server": "nodemon --watch package.json --watch src/server/**/*.ts --exec ts-node src/server/routes.ts"
+    "ts:server": "nodemon --watch package.json --watch out out/server/routes.js",
+    "server": "yarn ts:watch & yarn ts:server",
+    "ts:watch": "tsc -p ./tsconfig.server.json --watch"
   },
   "dependencies": {
     "@hapi/iron": "^6.0.0",
@@ -43,7 +45,7 @@
     "@babel/preset-typescript": "^7.12.7",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.3",
     "@types/cookie": "^0.4.0",
-    "@types/node": "12.12.2",
+    "@types/node": "14.14.13",
     "@types/passport": "^1.0.4",
     "@types/passport-github": "^1.1.5",
     "@types/prosemirror-commands": "^1.0.3",

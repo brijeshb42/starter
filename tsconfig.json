@@ -3,13 +3,14 @@
 		// Target latest version of ECMAScript.
 		"target": "esnext",
 		// path to output directory
-		"outDir": "./dist/",
+		"rootDir": "./src",
+		"outDir": "./out/",
 		// enable strict null checks as a best practice
 		"strictNullChecks": true,
 		// Search under node_modules for non-relative imports.
 		"moduleResolution": "node",
 		// Process & infer types from .js files.
-		"allowJs": true,
+		"allowJs": false,
 		// Don't emit; allow Babel to transform files.
 		"noEmit": true,
 		// Enable strictest settings like strictNullChecks & noImplicitAny.
@@ -38,6 +39,13 @@
 		"noFallthroughCasesInSwitch": true,
 		"forceConsistentCasingInFileNames": true,
 		"importHelpers": true,
-		"strictPropertyInitialization": false
+		"strictPropertyInitialization": false,
+		"types": []
 	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules/**/*"
+	]
 }

@@ -1,6 +1,6 @@
 import { NodeSpec } from 'prosemirror-model';
-import { ExtensionType, IExtension, IKeymapOptions } from '../base';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { ExtensionType, IExtension } from '../base';
+import { EditorState } from 'prosemirror-state';
 
 interface IQuoteOptions {
   quoteNode: string;
@@ -31,11 +31,11 @@ export default class Quote implements IExtension {
     return schema;
   }
 
-  getKeyMaps(options: IKeymapOptions) {
+  getKeyMaps() {
     return {
       'Mod-"': {
         description: 'Toggle block to quote',
-        handler: (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+        handler: (state: EditorState) => {
           const { $from, $to } = state.selection;
 
           if (!$from.sameParent($to)) {

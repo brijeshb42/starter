@@ -3,15 +3,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-console.log(process.env);
-
 const app = fastify({
   logger: process.env.NODE_ENV === 'development',
 });
 
-app.get('/', async (req, res) => {
-  console.log(req);
-  res.type('application/json').code(200);
+app.get('/', async () => {
   return {
     hello: 'world',
   };

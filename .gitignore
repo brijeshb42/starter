@@ -4,3 +4,5 @@ src/**/*.js
 pyenv/
 .env
 __pycache__/
+dist/
+out/

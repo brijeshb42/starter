@@ -28,7 +28,7 @@ export default function FormInput(props: IProps) {
   const { className, fields, title, onSubmit, submitText } = props;
   const refs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const count = useRef(getCount());
-  const [errors, setError] = useState<{ [key: string]: string }>({});
+  const [errors, /* setError */] = useState<{ [key: string]: string }>({});
 
   function handleSubmit(ev: Event) {
     ev.preventDefault();
